@@ -32,4 +32,5 @@ int handle_for(va_list arg, char specifier, int *i)
 				(*i) += 2;
 				break;
 	}
+	return 0;
 }
