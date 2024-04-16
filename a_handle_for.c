@@ -5,7 +5,7 @@
  * @specifier: the specifier
  * @arg: argument
  */
-void handle_for(va_list arg, char specifier, int *i)
+int handle_for(va_list arg, char specifier, int *i)
 {
 	switch (specifier)
 	{
