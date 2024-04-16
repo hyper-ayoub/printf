@@ -7,7 +7,7 @@
 #include<unistd.h>
 int _putchar(char a);
 int pu_s(const char *b);
-void handle_for(va_list arg, char specifier, int *i);
+int handle_for(va_list arg, char specifier, int *i);
 int  p_b(unsigned int a);
 int _printf(const char *format, ...);
 int p_n(int ayoub);
