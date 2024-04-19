@@ -1,107 +1,85 @@
 #include "main.h"
+
 /**
- * _printf - Receives the main string and all the necessary parameters to
- * print a formatted string
- * @format: A string containing all the desired characters
- * Return: A total count of the characters printed
+ * cleanup - Peforms cleanup operations for _printf.
+ * @args: A va_list of arguments provided to _printf.
+ * @output: A buffer struct.
+ */
+void cleanup(va_list args, buffer *output)
+{
+	va_end(args);
+	write(1, output->start, output->len);
+	free_buffer(output);
+}
+
+/**
+ * run_printf - Reads through the format string for _printf.
+ * @format: Character string to print - may contain directives.
+ * @output: A buffer struct containing a buffer.
+ * @args: A va_list of arguments.
+ *
+ * Return: The number of characters stored to output.
+ */
+int run_printf(const char *format, va_list args, buffer *output)
+{
+int i, wid, prec, ret = 0;
+char tmp;
+unsigned char flags, len;
+unsigned int (*f)(va_list, buffer *, unsigned char, int, int, unsigned char);
+
+	for (i = 0; *(format + i); i++)
+	{
+		len = 0;
+		if (*(format + i) == '%')
+		{
+			tmp = 0;
+			flags = handle_flags(format + i + 1, &tmp);
+			wid = handle_width(args, format + i + tmp + 1, &tmp);
+			prec = handle_precision(args, format + i + tmp + 1, &tmp);
+			len = handle_length(format + i + tmp + 1, &tmp);
+
+			f = handle_specifiers(format + i + tmp + 1);
+			if (f != NULL)
+			{
+				i += tmp + 1;
+				ret += f(args, output, flags, wid, prec, len);
+				continue;
+			}
+			else if (*(format + i + tmp + 1) == '\0')
+			{
+				ret = -1;
+				break;
+			}
+		}
+		ret += _memcpy(output, (format + i), 1);
+		i += (len != 0) ? 1 : 0;
+	}
+	cleanup(args, output);
+	return (ret);
+}
+
+/**
+ * _printf - Outputs a formatted string.
+ *
+ * @format: Character string to print - may contain directives.
+ *
+ * Return: The number of characters printed OR (-1) if fails.
  */
 int _printf(const char *format, ...)
 {
-int printed_characters;
-my_converter_t f_list[] = {
-{"c", print_char},
-{"s", print_str},
-{"%", print_percent},
-{"d", print_int},
-{"i", print_int},
-{"b", print_binary},
-{"r", print_reversed},
-{"R", print_rot13},
-{"u", print_unsigned},
-{"o", print_octal},
-{"x", print_hex_lower},
-{"X", print_hex_upper},
-{"S", print_custom_str},
-{"p", print_pointer},
-{"0", print_zero},
-{"-", print_mines},
-{"+", print_plus},
-{" ", print_space},
-{"#", print_hash},
-{"l", print_long},
-{"h", print_short},
-{NULL, NULL}
-};
-va_list arg_list;
-if (format == NULL)
-return (-1);
-va_start(arg_list, format);
-printed_characters = my_par(format, f_list, arg_list);
-va_end(arg_list);
-return (printed_characters);
-}
-/**
- * print_long - Handles the 'l' length modifier for integers
- * @args: The va_list containing the argument to print
- *
- * Return: The number of characters printed
- */
-int print_long(va_list args)
-{
-long int num = va_arg(args, long int);
-char buffer[32];
-int len;
-_itoa((int)num, buffer, 10);
-len = _strlen(buffer);
-return (write(1, buffer, len));
-}
-/**
- * print_short - Handles the 'h' length modifier for integers
- * @args: The va_list containing the argument to print
- *
- * Return: The number of characters printed
- */
-int print_short(va_list args)
-{
-short int num = (short int)va_arg(args, int);
-char buffer[32];
-int len;
-sprintf(buffer, "%d", (int)num);
-len = _strlen(buffer);
-return (write(1, buffer, len));
-}
-/**
- * _itoa - Converts an integer to a string
- * @n: The integer to convert
- * @buffer: The buffer to store the result
- * @base: The base for conversion (e.g., 10 for decimal)
- *
- * Return: A pointer to the result string
- */
-char *_itoa(int n, char *buffer, int base)
-{
-int i = 0;
-int is_negative = 0;
-if (n == 0)
-{
-buffer[i++] = '0';
-buffer[i] = '\0';
-return (buffer);
-}
-if (n < 0 && base == 10)
-{
-is_negative = 1;
-n = -n;
-}
-while (n != 0)
-{
-int remainder = n % base;
-buffer[i++] = (remainder > 9) ? (remainder - 10) + 'a' : remainder + '0';
-n = n / base;
-}
-if (is_negative)
-buffer[i++] = '-';
-buffer[i] = '\0';
-_reverse(buffer);
-return (buffer);
+	buffer *output;
+	va_list args;
+	int ret;
+
+	if (format == NULL)
+		return (-1);
+	output = init_buffer();
+	if (output == NULL)
+		return (-1);
+
+	va_start(args, format);
+
+	ret = run_printf(format, args, output);
+
+	return (ret);
 }
